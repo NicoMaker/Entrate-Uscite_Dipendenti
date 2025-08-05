@@ -541,6 +541,133 @@ function showToast(message, type = 'success') {
     }, 3000);
 }
 
+// Edit User Modal Logic
+window.editUser = async function(userId) {
+    try {
+        const response = await fetch(`http://localhost:3000/api/users`);
+        const users = await response.json();
+        const user = users.find(u => u.ID === userId);
+        if (!user) return;
+        document.getElementById('editUserId').value = user.ID;
+        document.getElementById('editUsername').value = user.Username;
+        document.getElementById('editPassword').value = '';
+        document.getElementById('editUserRole').value = user.LivelloAccesso;
+        // Carica dipendenti disponibili
+        const empRes = await fetch('http://localhost:3000/api/dipendenti');
+        const employees = await empRes.json();
+        const select = document.getElementById('editUserEmployee');
+        select.innerHTML = '<option value="">Nessun dipendente associato</option>';
+        employees.forEach(emp => {
+            // Mostra solo dipendenti non già associati o quello attuale
+            const alreadyLinked = users.some(u => u.ID_Dipendente === emp.ID && u.ID !== userId);
+            if (!alreadyLinked || user.ID_Dipendente === emp.ID) {
+                const option = document.createElement('option');
+                option.value = emp.ID;
+                option.textContent = `${emp.Nome} ${emp.Cognome} (${emp.Matricola})`;
+                if (user.ID_Dipendente === emp.ID) option.selected = true;
+                select.appendChild(option);
+            }
+        });
+        document.getElementById('editUserModal').classList.remove('hidden');
+    } catch (error) {
+        showToast('Errore nel caricamento dati utente', 'error');
+    }
+};
+
+window.hideEditUserModal = function() {
+    document.getElementById('editUserModal').classList.add('hidden');
+    document.getElementById('editUserForm').reset();
+};
+
+document.getElementById('editUserForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('editUserId').value;
+    const username = document.getElementById('editUsername').value;
+    const password = document.getElementById('editPassword').value;
+    const ruolo = document.getElementById('editUserRole').value;
+    const idDipendente = document.getElementById('editUserEmployee').value || null;
+    try {
+        const body = { username, ruolo, idDipendente };
+        if (password) body.password = password;
+        const response = await fetch(`http://localhost:3000/api/users/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+        if (response.ok) {
+            showToast('Utente aggiornato con successo');
+            hideEditUserModal();
+            loadUsers();
+        } else {
+            const data = await response.json();
+            showToast(data.error, 'error');
+        }
+    } catch (error) {
+        showToast('Errore nel salvataggio', 'error');
+    }
+});
+
+// Edit Employee Modal Logic
+window.editEmployee = async function(employeeId) {
+    try {
+        const response = await fetch('http://localhost:3000/api/dipendenti');
+        const employees = await response.json();
+        const emp = employees.find(e => e.ID === employeeId);
+        if (!emp) return;
+        document.getElementById('editEmployeeId').value = emp.ID;
+        document.getElementById('editEmployeeName').value = emp.Nome;
+        document.getElementById('editEmployeeSurname').value = emp.Cognome;
+        document.getElementById('editEmployeeMatricola').value = emp.Matricola;
+        document.getElementById('editEmployeeRole').value = emp.Ruolo;
+        document.getElementById('editEmployeeEmail').value = emp.Email;
+        document.getElementById('editEmployeePhone').value = emp.Telefono || '';
+        document.getElementById('editEmployeeDepartment').value = emp.Reparto || '';
+        document.getElementById('editEmployeeHireDate').value = emp.DataAssunzione;
+        document.getElementById('editEmployeeStatus').value = emp.Attivo;
+        document.getElementById('editEmployeeModal').classList.remove('hidden');
+    } catch (error) {
+        showToast('Errore nel caricamento dati dipendente', 'error');
+    }
+};
+
+window.hideEditEmployeeModal = function() {
+    document.getElementById('editEmployeeModal').classList.add('hidden');
+    document.getElementById('editEmployeeForm').reset();
+};
+
+document.getElementById('editEmployeeForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('editEmployeeId').value;
+    const nome = document.getElementById('editEmployeeName').value;
+    const cognome = document.getElementById('editEmployeeSurname').value;
+    const matricola = document.getElementById('editEmployeeMatricola').value;
+    const ruolo = document.getElementById('editEmployeeRole').value;
+    const email = document.getElementById('editEmployeeEmail').value;
+    const telefono = document.getElementById('editEmployeePhone').value;
+    const reparto = document.getElementById('editEmployeeDepartment').value;
+    const dataAssunzione = document.getElementById('editEmployeeHireDate').value;
+    const attivo = document.getElementById('editEmployeeStatus').value;
+    try {
+        const body = { nome, cognome, matricola, ruolo, email, telefono, reparto, dataAssunzione, attivo };
+        const response = await fetch(`http://localhost:3000/api/dipendenti/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+        if (response.ok) {
+            showToast('Dipendente aggiornato con successo');
+            hideEditEmployeeModal();
+            loadEmployees();
+            loadUsers(); // aggiorna anche la tabella utenti se serve
+        } else {
+            const data = await response.json();
+            showToast(data.error, 'error');
+        }
+    } catch (error) {
+        showToast('Errore nel salvataggio', 'error');
+    }
+});
+
 // Initialize on page load
 document.addEventListener("DOMContentLoaded", () => {
     const user = JSON.parse(localStorage.getItem("user"));
