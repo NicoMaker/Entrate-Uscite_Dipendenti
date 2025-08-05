@@ -75,22 +75,28 @@ const initDB = () => {
     const adminUsername = "admin";
     const adminPassword = "Admin123";
 
-    db.get("SELECT ID FROM Utenti WHERE Username = ?", [adminUsername], (err, row) => {
-      if (err) return console.error(err.message);
-      if (!row) {
-        bcrypt.hash(adminPassword, saltRounds, (err, hash) => {
-          if (err) return console.error(err.message);
-          db.run(
-            `INSERT INTO Utenti (Username, Password, LivelloAccesso) VALUES (?, ?, ?)`,
-            [adminUsername, hash, "Admin"],
-            function (err) {
-              if (err) return console.error(err.message);
-              console.log(`Default admin user created with ID: ${this.lastID}`);
-            }
-          );
-        });
-      }
-    });
+    db.get(
+      "SELECT ID FROM Utenti WHERE Username = ?",
+      [adminUsername],
+      (err, row) => {
+        if (err) return console.error(err.message);
+        if (!row) {
+          bcrypt.hash(adminPassword, saltRounds, (err, hash) => {
+            if (err) return console.error(err.message);
+            db.run(
+              `INSERT INTO Utenti (Username, Password, LivelloAccesso) VALUES (?, ?, ?)`,
+              [adminUsername, hash, "Admin"],
+              function (err) {
+                if (err) return console.error(err.message);
+                console.log(
+                  `Default admin user created with ID: ${this.lastID}`,
+                );
+              },
+            );
+          });
+        }
+      },
+    );
   });
 };
 
@@ -106,7 +112,14 @@ app.post("/api/login", (req, res) => {
     bcrypt.compare(password, user.Password, (err, result) => {
       if (err) return res.status(500).json({ error: "Errore del server" });
       if (result) {
-        res.json({ success: true, user: { id: user.ID, username: user.Username, ruolo: user.LivelloAccesso } });
+        res.json({
+          success: true,
+          user: {
+            id: user.ID,
+            username: user.Username,
+            ruolo: user.LivelloAccesso,
+          },
+        });
       } else {
         res.status(401).json({ error: "Credenziali non valide" });
       }
@@ -117,62 +130,92 @@ app.post("/api/login", (req, res) => {
 app.post("/api/users", (req, res) => {
   const { username, password, ruolo } = req.body;
   bcrypt.hash(password, saltRounds, (err, hash) => {
-    if (err) return res.status(500).json({ error: "Errore nella cifratura della password" });
+    if (err)
+      return res
+        .status(500)
+        .json({ error: "Errore nella cifratura della password" });
     db.run(
       `INSERT INTO Utenti (Username, Password, LivelloAccesso) VALUES (?, ?, ?)`,
       [username, hash, ruolo],
       function (err) {
-        if (err) return res.status(500).json({ error: "Errore nella creazione dell'utente" });
-        res.status(201).json({ message: "Utente creato con successo", userId: this.lastID });
-      }
+        if (err)
+          return res
+            .status(500)
+            .json({ error: "Errore nella creazione dell'utente" });
+        res
+          .status(201)
+          .json({ message: "Utente creato con successo", userId: this.lastID });
+      },
     );
   });
 });
 
 app.get("/api/users", (req, res) => {
   db.all("SELECT ID, Username, LivelloAccesso FROM Utenti", [], (err, rows) => {
-    if (err) return res.status(500).json({ error: "Errore nella lettura degli utenti" });
+    if (err)
+      return res
+        .status(500)
+        .json({ error: "Errore nella lettura degli utenti" });
     res.json(rows);
   });
 });
 
 app.post("/api/presenze/entrata", (req, res) => {
   const { id_dipendente } = req.body;
-  const data = new Date().toISOString().split('T')[0];
-  const oraEntrata = new Date().toLocaleTimeString('it-IT');
+  const data = new Date().toISOString().split("T")[0];
+  const oraEntrata = new Date().toLocaleTimeString("it-IT");
   db.run(
     `INSERT INTO Presenze (ID_Dipendente, Data, OraEntrata) VALUES (?, ?, ?)`,
     [id_dipendente, data, oraEntrata],
     function (err) {
-      if (err) return res.status(500).json({ error: "Errore nella registrazione dell'entrata" });
-      res.status(201).json({ message: "Entrata registrata con successo", presenzaId: this.lastID });
-    }
+      if (err)
+        return res
+          .status(500)
+          .json({ error: "Errore nella registrazione dell'entrata" });
+      res
+        .status(201)
+        .json({
+          message: "Entrata registrata con successo",
+          presenzaId: this.lastID,
+        });
+    },
   );
 });
 
 app.post("/api/presenze/uscita", (req, res) => {
   const { id_dipendente } = req.body;
-  const oraUscita = new Date().toLocaleTimeString('it-IT');
+  const oraUscita = new Date().toLocaleTimeString("it-IT");
   db.run(
     `UPDATE Presenze SET OraUscita = ? WHERE ID_Dipendente = ? AND OraUscita IS NULL ORDER BY ID DESC LIMIT 1`,
     [oraUscita, id_dipendente],
     function (err) {
-      if (err) return res.status(500).json({ error: "Errore nella registrazione dell'uscita" });
+      if (err)
+        return res
+          .status(500)
+          .json({ error: "Errore nella registrazione dell'uscita" });
       res.json({ message: "Uscita registrata con successo" });
-    }
+    },
   );
 });
 
 app.post("/api/richieste", (req, res) => {
   const { id_dipendente, tipoRichiesta } = req.body;
-  const data = new Date().toISOString().split('T')[0];
+  const data = new Date().toISOString().split("T")[0];
   db.run(
     `INSERT INTO Presenze (ID_Dipendente, Data, Tipologia) VALUES (?, ?, ?)`,
     [id_dipendente, data, tipoRichiesta],
     function (err) {
-      if (err) return res.status(500).json({ error: "Errore nell'invio della richiesta" });
-      res.status(201).json({ message: "Richiesta inviata con successo", richiestaId: this.lastID });
-    }
+      if (err)
+        return res
+          .status(500)
+          .json({ error: "Errore nell'invio della richiesta" });
+      res
+        .status(201)
+        .json({
+          message: "Richiesta inviata con successo",
+          richiestaId: this.lastID,
+        });
+    },
   );
 });
 
@@ -182,37 +225,57 @@ app.post("/api/turni", (req, res) => {
     `INSERT INTO Turni (ID_Dipendente, Data, OraInizio, OraFine, TipoTurno) VALUES (?, ?, ?, ?, ?)`,
     [id_dipendente, data, oraInizio, oraFine, tipoTurno],
     function (err) {
-      if (err) return res.status(500).json({ error: "Errore nella creazione del turno" });
-      res.status(201).json({ message: "Turno creato con successo", turnoId: this.lastID });
-    }
+      if (err)
+        return res
+          .status(500)
+          .json({ error: "Errore nella creazione del turno" });
+      res
+        .status(201)
+        .json({ message: "Turno creato con successo", turnoId: this.lastID });
+    },
   );
 });
 
 app.get("/api/presenze/oggi", (req, res) => {
-  const data = new Date().toISOString().split('T')[0];
-  db.all(`
+  const data = new Date().toISOString().split("T")[0];
+  db.all(
+    `
     SELECT d.Nome, d.Cognome, p.OraEntrata, p.OraUscita
     FROM Presenze p
     JOIN Dipendenti d ON p.ID_Dipendente = d.ID
     WHERE p.Data = ?
-  `, [data], (err, rows) => {
-    if (err) return res.status(500).json({ error: "Errore nella lettura delle presenze" });
-    res.json(rows);
-  });
+  `,
+    [data],
+    (err, rows) => {
+      if (err)
+        return res
+          .status(500)
+          .json({ error: "Errore nella lettura delle presenze" });
+      res.json(rows);
+    },
+  );
 });
 
 app.get("/api/presenze/statistiche", (req, res) => {
-  const dataInizioMese = new Date().toISOString().split('T')[0].substring(0, 7) + "-01";
-  db.all(`
+  const dataInizioMese =
+    new Date().toISOString().split("T")[0].substring(0, 7) + "-01";
+  db.all(
+    `
     SELECT d.Nome, d.Cognome, COUNT(p.ID) as giorni_presenza
     FROM Presenze p
     JOIN Dipendenti d ON p.ID_Dipendente = d.ID
     WHERE p.Data >= ?
     GROUP BY d.ID
-  `, [dataInizioMese], (err, rows) => {
-    if (err) return res.status(500).json({ error: "Errore nella lettura delle statistiche" });
-    res.json(rows);
-  });
+  `,
+    [dataInizioMese],
+    (err, rows) => {
+      if (err)
+        return res
+          .status(500)
+          .json({ error: "Errore nella lettura delle statistiche" });
+      res.json(rows);
+    },
+  );
 });
 
 // Avvio server

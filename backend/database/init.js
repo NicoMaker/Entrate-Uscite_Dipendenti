@@ -49,17 +49,19 @@ export function initDB() {
       tipoTurno TEXT
     )`);
 
-    db.get("SELECT * FROM utenti WHERE username = 'admin'", async (err, row) => {
-      if (!row) {
-        const hash = await bcrypt.hash("Admin123", saltRounds);
-        db.run("INSERT INTO utenti (username, password, ruolo) VALUES (?,?,?)", [
-          "admin",
-          hash,
-          "Admin",
-        ]);
-        console.log("👑 Utente Admin creato (Admin / Admin123)");
-      }
-    });
+    db.get(
+      "SELECT * FROM utenti WHERE username = 'admin'",
+      async (err, row) => {
+        if (!row) {
+          const hash = await bcrypt.hash("Admin123", saltRounds);
+          db.run(
+            "INSERT INTO utenti (username, password, ruolo) VALUES (?,?,?)",
+            ["admin", hash, "Admin"],
+          );
+          console.log("👑 Utente Admin creato (Admin / Admin123)");
+        }
+      },
+    );
   });
 
   return db;

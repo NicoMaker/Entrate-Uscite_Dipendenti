@@ -64,7 +64,7 @@ async function caricaUtenti() {
     const response = await fetch("http://localhost:3000/api/users");
     const users = await response.json();
 
-    users.forEach(user => {
+    users.forEach((user) => {
       const li = document.createElement("li");
       li.className = "border-b py-2 flex justify-between items-center";
       li.textContent = `${user.Username} (${user.LivelloAccesso})`;
@@ -167,7 +167,13 @@ async function creaTurno() {
     const response = await fetch("http://localhost:3000/api/turni", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id_dipendente: user.id, data: dataTurno, oraInizio, oraFine, tipoTurno }),
+      body: JSON.stringify({
+        id_dipendente: user.id,
+        data: dataTurno,
+        oraInizio,
+        oraFine,
+        tipoTurno,
+      }),
     });
 
     if (response.ok) {
