@@ -797,6 +797,66 @@ app.get("/api/dashboard/stats", (req, res) => {
     });
 });
 
+app.post("/api/dipendenti", (req, res) => {
+    const { nome, cognome, matricola, ruolo, dataAssunzione, email, telefono, reparto } = req.body;
+
+    if (!nome || !cognome || !matricola || !ruolo || !dataAssunzione || !email) {
+        return res.status(400).json({ error: "Tutti i campi obbligatori sono richiesti" });
+    }
+
+    db.run(
+        `
+        INSERT INTO Dipendenti (Nome, Cognome, Matricola, Ruolo, DataAssunzione, Email, Telefono, Reparto)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `,
+        [
+            nome,
+            cognome,
+            matricola,
+            ruolo,
+            dataAssunzione,
+            email,
+            telefono || null,
+            reparto || null,
+        ],
+        function (err) {
+            if (err) {
+                if (err.message.includes("UNIQUE constraint failed")) {
+                    return res.status(400).json({ error: "Matricola o email già esistente" });
+                }
+                return res.status(500).json({ error: "Errore nella creazione del dipendente" });
+            }
+
+            const dipendenteId = this.lastID;
+            const username = matricola; // O un'altra logica, ad esempio "nome.cognome"
+            const passwordIniziale = "Password123"; // Password temporanea
+
+            bcrypt.hash(passwordIniziale, saltRounds, (err, hash) => {
+                if (err) {
+                    return res.status(500).json({ error: "Errore nella cifratura della password per il nuovo utente" });
+                }
+
+                db.run(
+                    `INSERT INTO Utenti (ID_Dipendente, Username, Password, LivelloAccesso) VALUES (?, ?, ?, ?)`,
+                    [dipendenteId, username, hash, "Employee"], // Ruolo di default "Employee"
+                    function (err) {
+                        if (err) {
+                            console.error("Errore nella creazione dell'utente associato:", err.message);
+                            // Potresti voler gestire l'errore per pulire il dipendente appena creato
+                            return res.status(500).json({ error: "Dipendente creato, ma errore nella creazione dell'utente associato." });
+                        }
+                        res.status(201).json({
+                            message: "Dipendente e utente creati con successo",
+                            dipendenteId: dipendenteId,
+                            userId: this.lastID
+                        });
+                    }
+                );
+            });
+        }
+    );
+});
+
 // Avvio server
 app.listen(PORT, () => {
   console.log(`✅ Server avviato su http://localhost:${PORT}`);
