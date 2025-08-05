@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin - Gestione Utenti</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="p-6 bg-gray-100 min-h-screen">
+  <div class="max-w-4xl mx-auto">
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-3xl font-bold">Pannello Admin</h1>
+      <button onclick="logout()" class="bg-red-500 text-white p-2 rounded hover:bg-red-600 transition-colors">Logout</button>
+    </div>
+
+    <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+      <h2 class="text-xl font-semibold mb-4">Crea Nuovo Utente</h2>
+      <div class="space-y-4">
+        <input id="newUser" placeholder="Username" class="border border-gray-300 p-2 rounded w-full focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+        <input id="newPass" type="password" placeholder="Password" class="border border-gray-300 p-2 rounded w-full focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+        <select id="newRole" class="border border-gray-300 p-2 rounded w-full focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <option>Dipendente</option>
+          <option>Responsabile</option>
+          <option>Admin</option>
+        </select>
+        <button onclick="creaUtente()" class="bg-blue-600 text-white p-2 rounded w-full hover:bg-blue-700 transition-colors">Crea Utente</button>
+      </div>
+    </div>
+
+    <div class="bg-white p-6 rounded-lg shadow-md">
+      <h2 class="text-xl font-semibold mb-4">Lista Utenti</h2>
+      <ul id="listaUtenti" class="divide-y divide-gray-200">
+        </ul>
+    </div>
+  </div>
+
+  <script src="js/main.js"></script>
+  <script>
+    function logout() {
+      localStorage.removeItem("user");
+      window.location.href = "login.html";
+    }
+  </script>
+</body>
+</html>
