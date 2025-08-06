@@ -103,7 +103,7 @@ const initDB = () => {
     `);
 
     // Creazione utente admin di default
-    const adminUsername = "admin";
+    const adminUsername = "Admin";
     const adminPassword = "Admin123";
 
     db.get(
@@ -120,7 +120,7 @@ const initDB = () => {
               function (err) {
                 if (err) return console.error(err.message);
                 console.log(
-                  `✅ Default admin user created with ID: ${this.lastID}`,
+                  `✅ Default Admin user created with ID: ${this.lastID}`,
                 );
               },
             );
